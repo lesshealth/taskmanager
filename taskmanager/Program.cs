@@ -4,6 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
+using Serilog.Formatting.Compact;
+using Serilog.Formatting.Json;
+
 
 namespace taskmanager
 {
@@ -14,12 +18,19 @@ namespace taskmanager
 
         static void Main()
         {
-            Trace.Listeners.Add(new ConsoleTraceListener());
-            Trace.Listeners.Add(new TextWriterTraceListener("taskmanager.log"));
-            Trace.AutoFlush = true;
+            Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .WriteTo.File(
+                formatter: new JsonFormatter(),
+                path: "logs\\taskmanager.json",
+                rollingInterval: RollingInterval.Day)
+            .CreateLogger();
 
-            Trace.WriteLine("Менеджер задач запущен");
-            Trace.WriteLine($"Время запуска: {DateTime.Now}");
+
+            Log.Information("Менеджер задач запущен");
+
+            //Trace.WriteLine("Менеджер задач запущен");
+            //Trace.WriteLine($"Время запуска: {DateTime.Now}");
 
             try
             {
@@ -27,13 +38,13 @@ namespace taskmanager
             }
             catch (Exception ex)
             {
-                Trace.TraceError($"Критическая ошибка: {ex.Message}");
+                Log.Error($"Критическая ошибка: {ex.Message}");
                 Console.WriteLine($"Произошла ошибка: {ex.Message}");
             }
             finally
             {
-                Trace.WriteLine("Менеджер задач завершил работу");
-                Trace.WriteLine("----------------------------------");
+                Log.Information("Менеджер задач завершил работу");
+                Log.Information("----------------------------------");
             }
         }
 
@@ -49,7 +60,7 @@ namespace taskmanager
                 Console.Write("Выберите: ");
 
                 string input = Console.ReadLine();
-                Trace.WriteLine($"Пользователь ввел: {input}");
+                Log.Information($"Пользователь ввел: {input}");
 
                 Console.Clear();
 
@@ -71,13 +82,13 @@ namespace taskmanager
                 }
                 else if (input == "5")
                 {
-                    Trace.WriteLine("Завершение работы по команде пользователя");
+                    Log.Information("Завершение работы по команде пользователя");
                     break;
                 }
                 else
                 {
-                    Trace.TraceWarning("Неверный ввод в меню");
-                    Console.WriteLine("Неверный ввод!");
+                    Log.Warning("Неверный ввод в меню");
+                    Log.Information("Неверный ввод!");
                 }
             }
         }
@@ -89,14 +100,14 @@ namespace taskmanager
             
             if (string.IsNullOrWhiteSpace(task))
             {
-                Trace.TraceWarning("Попытка добавить пустую задачу");
-                Console.WriteLine("Задача не может быть пустой!");
+                Log.Warning("Попытка добавить пустую задачу");
+                Log.Information("Задача не может быть пустой!");
                 return;
             }
 
             tasks.Add(task);
             completed.Add(false);
-            Trace.TraceInformation($"Добавлена задача: {task}");
+            Log.Information($"Добавлена задача: {task}");
             Console.WriteLine("Добавлено!");
         }
 
@@ -104,7 +115,7 @@ namespace taskmanager
         {
             if (tasks.Count == 0)
             {
-                Trace.TraceWarning("Попытка удаления при пустом списке");
+                Log.Warning("Попытка удаления при пустом списке");
                 Console.WriteLine("Нет задач!");
                 return;
             }
@@ -114,7 +125,7 @@ namespace taskmanager
 
             if (!int.TryParse(Console.ReadLine(), out int index) || index < 1 || index > tasks.Count)
             {
-                Trace.TraceError("Ошибка ввода номера задачи для удаления");
+                Log.Error("Ошибка ввода номера задачи для удаления");
                 Console.WriteLine("Ошибка!");
                 return;
             }
@@ -122,7 +133,7 @@ namespace taskmanager
             string deletedTask = tasks[index-1];
             tasks.RemoveAt(index-1);
             completed.RemoveAt(index-1);
-            Trace.TraceInformation($"Удалена задача: {deletedTask}");
+            Log.Information($"Удалена задача: {deletedTask}");
             Console.WriteLine("Удалено!");
         }
 
@@ -130,12 +141,12 @@ namespace taskmanager
         {
             if (tasks.Count == 0)
             {
-                Trace.WriteLine("DEBUG: Отображение пустого списка задач");
+                Log.Information("DEBUG: Отображение пустого списка задач");
                 Console.WriteLine("Нет задач!");
                 return;
             }
 
-            Trace.WriteLine("DEBUG: Отображение списка задач");
+            Log.Information("DEBUG: Отображение списка задач");
             for (int i = 0; i < tasks.Count; i++)
             {
                 Console.WriteLine($"{i+1}. {tasks[i]} {(completed[i] ? "[X]" : "[ ]")}");
@@ -146,7 +157,7 @@ namespace taskmanager
         {
             if (tasks.Count == 0)
             {
-                Trace.TraceWarning("Попытка отметить задачу при пустом списке");
+                Log.Warning("Попытка отметить задачу при пустом списке");
                 Console.WriteLine("Нет задач!");
                 return;
             }
@@ -156,13 +167,13 @@ namespace taskmanager
 
             if (!int.TryParse(Console.ReadLine(), out int index) || index < 1 || index > tasks.Count)
             {
-                Trace.TraceError("Ошибка ввода номера задачи для отметки");
+                Log.Error("Ошибка ввода номера задачи для отметки");
                 Console.WriteLine("Ошибка!");
                 return;
             }
 
             completed[index-1] = true;
-            Trace.TraceInformation($"Задача отмечена как выполненная: {tasks[index-1]}");
+            Log.Information($"Задача отмечена как выполненная: {tasks[index-1]}");
             Console.WriteLine("Отмечено!");
         }
     }

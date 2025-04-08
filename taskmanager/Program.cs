@@ -13,11 +13,19 @@ namespace taskmanager
 {
     internal class Program
     {
+
+        public static class Tracer
+        {
+            public static TraceSource TaskManagerTrace = new TraceSource("TaskManagerTrace");
+        }
         static List<string> tasks = new List<string>();
         static List<bool> completed = new List<bool>();
 
         static void Main()
         {
+            Tracer.TaskManagerTrace.Listeners.Add(new TextWriterTraceListener("logs\\taskmanagerTrace.log"));
+            Tracer.TaskManagerTrace.Flush();
+
             Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
             .WriteTo.File(
@@ -95,11 +103,17 @@ namespace taskmanager
 
         static void AddTask()
         {
+            Tracer.TaskManagerTrace.TraceEvent(TraceEventType.Start, 0, "Начало AddTask");
+            Stopwatch sw = Stopwatch.StartNew();
             Console.Write("Введите задачу: ");
             string task = Console.ReadLine();
             
             if (string.IsNullOrWhiteSpace(task))
             {
+                Tracer.TaskManagerTrace.TraceEvent(
+                    TraceEventType.Warning,
+                    2,
+                    "Попытка добавить задачу с пустым названием.");
                 Log.Warning("Попытка добавить пустую задачу");
                 Log.Information("Задача не может быть пустой!");
                 return;
@@ -109,6 +123,12 @@ namespace taskmanager
             completed.Add(false);
             Log.Information($"Добавлена задача: {task}");
             Console.WriteLine("Добавлено!");
+            sw.Stop();
+            Tracer.TaskManagerTrace.TraceEvent(
+                TraceEventType.Stop,
+                1,
+                $"Завершение AddTask. Время: {sw.ElapsedMilliseconds} мс"
+                );
         }
 
         static void DeleteTask()

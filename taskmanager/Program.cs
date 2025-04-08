@@ -4,6 +4,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
+using Serilog.Formatting.Compact;
+
 
 namespace taskmanager
 {
@@ -14,9 +17,19 @@ namespace taskmanager
 
         static void Main()
         {
-            Trace.Listeners.Add(new ConsoleTraceListener());
-            Trace.Listeners.Add(new TextWriterTraceListener("taskmanager.log"));
-            Trace.AutoFlush = true;
+            //Trace.Listeners.Add(new ConsoleTraceListener());
+            //Trace.Listeners.Add(new TextWriterTraceListener("taskmanager.log"));
+            //Trace.AutoFlush = true;
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .WriteTo.Console()
+                .WriteTo.File(new CompactJsonFormatter(), "taskmanager.json",
+                    rollingInterval: RollingInterval.Day,
+                    outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+                .CreateLogger();
+
+            
 
             Trace.WriteLine("Менеджер задач запущен");
             Trace.WriteLine($"Время запуска: {DateTime.Now}");

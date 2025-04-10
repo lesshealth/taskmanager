@@ -133,7 +133,7 @@ namespace taskmanager
 
             tasks.Add(task);
             completed.Add(false);
-            Log.Information($"Добавлена задача: {task}");
+            Log.Information("Добавлена задача {@Task}", task);
             Console.WriteLine("Добавлено!");
             sw.Stop();
             Tracer.TaskManagerTrace.TraceEvent(
@@ -179,7 +179,7 @@ namespace taskmanager
             string deletedTask = tasks[index-1];
             tasks.RemoveAt(index-1);
             completed.RemoveAt(index-1);
-            Log.Information($"Удалена задача: {deletedTask}");
+            Log.Information("Удалена задача {@Task}", deletedTask);
             Console.WriteLine("Удалено!");
             sw.Stop();
             Tracer.TaskManagerTrace.TraceEvent(
@@ -211,6 +211,8 @@ namespace taskmanager
             for (int i = 0; i < tasks.Count; i++)
             {
                 Console.WriteLine($"{i+1}. {tasks[i]} {(completed[i] ? "[X]" : "[ ]")}");
+                Log.Information($"Показан список из {tasks.Count} задач");
+
             }
             sw.Stop();
             Tracer.TaskManagerTrace.TraceEvent(
@@ -240,7 +242,7 @@ namespace taskmanager
             }
 
             completed[index-1] = true;
-            Log.Information($"Задача отмечена как выполненная: {tasks[index-1]}");
+            Log.Information("Задача отмечена как выполнена: {@Task}", tasks[index - 1]);
             Console.WriteLine("Отмечено!");
         }
     }

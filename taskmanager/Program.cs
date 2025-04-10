@@ -14,9 +14,13 @@ namespace taskmanager
     internal class Program
     {
 
+
         public static class Tracer
         {
-            public static TraceSource TaskManagerTrace = new TraceSource("TaskManagerTrace");
+            public static TraceSource TaskManagerTrace = new TraceSource("TaskManagerTrace")
+            {
+                Switch = new SourceSwitch("sourceSwitch", "All")
+            };
         }
         static List<string> tasks = new List<string>();
         static List<bool> completed = new List<bool>();
@@ -53,6 +57,12 @@ namespace taskmanager
             {
                 Log.Information("Менеджер задач завершил работу");
                 Log.Information("----------------------------------");
+
+                foreach (TraceListener listener in Tracer.TaskManagerTrace.Listeners)
+                {
+                    listener.Flush();
+                    listener.Close();
+                }
             }
         }
 
@@ -105,6 +115,8 @@ namespace taskmanager
         {
             Tracer.TaskManagerTrace.TraceEvent(TraceEventType.Start, 0, "Начало AddTask");
             Stopwatch sw = Stopwatch.StartNew();
+            sw.Start();
+
             Console.Write("Введите задачу: ");
             string task = Console.ReadLine();
             
@@ -127,14 +139,23 @@ namespace taskmanager
             Tracer.TaskManagerTrace.TraceEvent(
                 TraceEventType.Stop,
                 1,
-                $"Завершение AddTask. Время: {sw.ElapsedMilliseconds} мс"
+                $"Завершение AddTask. Время: {sw.Elapsed.TotalMilliseconds:F2} мс"
                 );
         }
 
         static void DeleteTask()
         {
+            Tracer.TaskManagerTrace.TraceEvent(TraceEventType.Start, 0, "Начало DeleteTask");
+            Stopwatch sw = Stopwatch.StartNew();
+            sw.Start();
+
             if (tasks.Count == 0)
             {
+                Tracer.TaskManagerTrace.TraceEvent(
+                    TraceEventType.Warning,
+                    2,
+                    "Попытка удаления при пустом списке."
+                );
                 Log.Warning("Попытка удаления при пустом списке");
                 Console.WriteLine("Нет задач!");
                 return;
@@ -145,6 +166,11 @@ namespace taskmanager
 
             if (!int.TryParse(Console.ReadLine(), out int index) || index < 1 || index > tasks.Count)
             {
+                Tracer.TaskManagerTrace.TraceEvent(
+                    TraceEventType.Error,
+                    2,
+                    "Ошибка ввода номера задачи для удаления."
+                );
                 Log.Error("Ошибка ввода номера задачи для удаления");
                 Console.WriteLine("Ошибка!");
                 return;
@@ -155,12 +181,27 @@ namespace taskmanager
             completed.RemoveAt(index-1);
             Log.Information($"Удалена задача: {deletedTask}");
             Console.WriteLine("Удалено!");
+            sw.Stop();
+            Tracer.TaskManagerTrace.TraceEvent(
+                TraceEventType.Stop,
+                1,
+                $"Завершение DeleteTask. Время: {sw.Elapsed.TotalMilliseconds:F2} мс"
+            );
         }
 
         static void ShowTasks()
         {
+            Tracer.TaskManagerTrace.TraceEvent(TraceEventType.Start, 0, "Начало ShowTask");
+            Stopwatch sw = Stopwatch.StartNew();
+            sw.Start();
+
             if (tasks.Count == 0)
             {
+                Tracer.TaskManagerTrace.TraceEvent(
+                    TraceEventType.Warning,
+                    2,
+                    "Список задач пуст."
+                );
                 Log.Information("DEBUG: Отображение пустого списка задач");
                 Console.WriteLine("Нет задач!");
                 return;
@@ -171,6 +212,12 @@ namespace taskmanager
             {
                 Console.WriteLine($"{i+1}. {tasks[i]} {(completed[i] ? "[X]" : "[ ]")}");
             }
+            sw.Stop();
+            Tracer.TaskManagerTrace.TraceEvent(
+                TraceEventType.Stop,
+                1,
+                $"Завершение ShowTask. Время: {sw.Elapsed.TotalMilliseconds:F2} мс"
+            );
         }
 
         static void MarkCompleted()
